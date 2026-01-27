@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button } from './ui/Button'; // Assuming a Button component exists
-import { usePMO } from '../context/PMOContext'; // Import usePMO
+import { Button } from './ui/Button';
+import { usePMO } from '../context/PMOContext';
 import { Member } from '../types';
 
 const UserRegistration: React.FC = () => {
@@ -10,7 +10,7 @@ const UserRegistration: React.FC = () => {
   const [yearOfEmployment, setYearOfEmployment] = useState('');
   const [otherNotes, setOtherNotes] = useState('');
 
-  const { addMember } = usePMO(); // Get addMember from the context
+  const { addMember } = usePMO();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,8 +20,8 @@ const UserRegistration: React.FC = () => {
       employeeNumber,
       yearOfEmployment: yearOfEmployment ? parseInt(yearOfEmployment) : undefined,
       otherNotes,
-      position: 'Staff', // Default position, can be changed later or added as an input field
-      skills: [], // Default empty skills, can be changed later or added as an input field
+      position: 'Staff', 
+      skills: [], 
     };
     addMember(newMember);
     console.log("New member added:", newMember);
@@ -33,59 +33,45 @@ const UserRegistration: React.FC = () => {
     setOtherNotes('');
   };
 
+  const inputClassName = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none";
+  const labelClassName = "block text-sm font-semibold text-slate-700 mb-1";
+
   return (
-    <div className="user-registration-container">
-      <h2>사용자 추가</h2>
-      <form onSubmit={handleSubmit} className="user-registration-form">
-        <div>
-          <label htmlFor="name">사용자 이름:</label>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="id">아이디:</label>
-          <input
-            type="text"
-            id="id"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="employeeNumber">사번:</label>
-          <input
-            type="text"
-            id="employeeNumber"
-            value={employeeNumber}
-            onChange={(e) => setEmployeeNumber(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="yearOfEmployment">입사연도:</label>
-          <input
-            type="number"
-            id="yearOfEmployment"
-            value={yearOfEmployment}
-            onChange={(e) => setYearOfEmployment(e.target.value)}
-          />
-        </div>
-        <div>
-          <label htmlFor="otherNotes">기타 사항:</label>
-          <textarea
-            id="otherNotes"
-            value={otherNotes}
-            onChange={(e) => setOtherNotes(e.target.value)}
-          />
-        </div>
-        <Button type="submit">사용자 추가</Button>
-      </form>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900">사용자 등록</h2>
+        <p className="text-slate-500">신규 사용자의 정보를 시스템에 추가합니다.</p>
+      </div>
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="id" className={labelClassName}>아이디</label>
+              <input type="text" id="id" value={id} onChange={e => setId(e.target.value)} required className={inputClassName} />
+            </div>
+            <div>
+              <label htmlFor="name" className={labelClassName}>사용자 이름</label>
+              <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} required className={inputClassName} />
+            </div>
+
+            <div>
+              <label htmlFor="employeeNumber" className={labelClassName}>사번</label>
+              <input type="text" id="employeeNumber" value={employeeNumber} onChange={e => setEmployeeNumber(e.target.value)} required className={inputClassName} />
+            </div>
+            <div>
+              <label htmlFor="yearOfEmployment" className={labelClassName}>입사연도</label>
+              <input type="date" id="yearOfEmployment" value={yearOfEmployment} onChange={e => setYearOfEmployment(e.target.value)} className={inputClassName} />
+            </div>
+            <div className="col-span-2">
+              <label htmlFor="otherNotes" className={labelClassName}>기타 사항</label>
+              <textarea id="otherNotes" value={otherNotes} onChange={e => setOtherNotes(e.target.value)} className={`${inputClassName} min-h-[100px]`} />
+            </div>
+          </div>
+          <div className="pt-4 flex justify-end">
+            <Button type="submit" variant="primary">사용자 추가</Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
