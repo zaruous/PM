@@ -1,0 +1,4 @@
+-- This file is deprecated.
+-- Please refer to the specific files for your database:
+-- 1. Oracle: database/oracle_ddl.sql
+-- 2. PostgreSQL: database/postgres_ddl.sql
