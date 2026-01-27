@@ -53,48 +53,9 @@ PMO Suite는 프로젝트 관리 오피스(PMO)를 위한 웹 기반 대시보�
 
 이 프로젝트는 React + TypeScript 환경에서 실행됩니다. 아래 절차를 따라 로컬 환경을 구성하세요.
 
-### 1. 사전 요구사항
-*   Node.js (v18 이상 권장)
-*   npm 또는 yarn
-
-### 2. 프로젝트 설정 (Vite 사용 시)
-
-```bash
-# 1. 새로운 Vite 프로젝트 생성
-npm create vite@latest pmo-suite -- --template react-ts
-
-# 2. 프로젝트 폴더로 이동
-cd pmo-suite
-
-# 3. 필요한 라이브러리 설치
-npm install lucide-react recharts tailwind-merge clsx
-npm install -D tailwindcss postcss autoprefixer
-
-# 4. Tailwind CSS 초기화
-npx tailwindcss init -p
 ```
-
-### 3. Tailwind 설정 (`tailwind.config.js`)
-`content` 배열을 아래와 같이 수정합니다.
-
-```javascript
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+npm install
 ```
-
-### 4. 소스 코드 적용
-제공된 소스 파일들을 `src` 폴더 내 적절한 위치에 배치합니다.
-*   `types.ts`, `App.tsx`, `main.tsx` (index.tsx)
-*   `context/`, `components/`, `utils/` 폴더 생성 후 파일 이동
 
 ### 5. 실행
 

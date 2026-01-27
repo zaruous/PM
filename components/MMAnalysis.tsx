@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { usePMO } from '../context/PMOContext';
 import { getMonthList } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -10,10 +10,31 @@ export const MMAnalysis: React.FC = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   
   const [editCell, setEditCell] = useState<{ memberId: string; month: string } | null>(null);
-  const [tempWeights, setTempWeights] = useState<{ assignmentId: string; weight: number }[]>([]);
+  const [tempWeights, setTempWeights] = useState<{ assignmentId: string; weight: number; warning: string | null }[]>([]);
+  const [updatesQueue, setUpdatesQueue] = useState<{assignmentId: string; data: any}[] | null>(null);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    assignments.forEach(a => {
+        years.add(new Date(a.startDate).getFullYear());
+        years.add(new Date(a.endDate).getFullYear());
+    });
+    if (years.size === 0) {
+        return [new Date().getFullYear()];
+    }
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+    const yearList = [];
+    for (let y = minYear; y <= maxYear; y++) {
+        yearList.push(y);
+    }
+    return yearList.sort((a,b) => b - a);
+  }, [assignments]);
+
+  const [selectedYear, setSelectedYear] = useState<number>(availableYears.includes(2026) ? 2026 : availableYears[0] || new Date().getFullYear());
 
   const analysisData = useMemo(() => {
-    const months = getMonthList("2026-01-01", "2026-12-31");
+    const months = getMonthList(`${selectedYear}-01-01`, `${selectedYear}-12-31`);
 
     const chartData = months.map(m => {
         let billable = 0;
@@ -77,7 +98,7 @@ export const MMAnalysis: React.FC = () => {
     });
 
     return { months, chartData, matrix };
-  }, [assignments, members, projects, selectedMemberId]);
+  }, [assignments, members, projects, selectedMemberId, selectedYear]);
 
   const handleExport = () => {
     const headers = ['Member', 'Position', 'Status', ...analysisData.months, 'Total MM'];
@@ -87,11 +108,11 @@ export const MMAnalysis: React.FC = () => {
         rowData.push(row.total);
         return rowData;
     });
-    const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = "\uFEFF" + [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/tsv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = "MM_Analysis_2026.csv";
+    link.download = `MM_Analysis_${selectedYear}.tsv`;
     link.click();
   };
 
@@ -106,31 +127,50 @@ export const MMAnalysis: React.FC = () => {
     setEditCell({ memberId, month });
     setTempWeights(relevantAssignments.map(a => ({
         assignmentId: a.id,
-        weight: a.monthlyWeights[month] ?? 0
+        weight: a.monthlyWeights[month] ?? 0,
+        warning: null
     })));
   };
 
   const handleSaveWeights = () => {
     if (!editCell) return;
 
-    tempWeights.forEach(item => {
+    const updates = tempWeights.map(item => {
         const assignment = assignments.find(a => a.id === item.assignmentId);
-        if (assignment) {
-            const updatedWeights = { ...assignment.monthlyWeights, [editCell.month]: item.weight };
-            const weightsArray = Object.values(updatedWeights) as number[];
-            const avgRatio = weightsArray.length > 0 
-                ? weightsArray.reduce((acc: number, cur: number) => acc + cur, 0) / weightsArray.length 
-                : 1.0;
-            
-            updateAssignment(assignment.id, {
-                monthlyWeights: updatedWeights,
-                inputRatio: avgRatio
-            });
-        }
-    });
+        if (!assignment) return null;
+
+        const weightToSave = Math.min(1.0, Math.max(0.0, item.weight));
+        const updatedWeights = { ...assignment.monthlyWeights, [editCell.month]: weightToSave };
+        const weightsArray = Object.values(updatedWeights) as number[];
+        const avgRatio = weightsArray.length > 0
+            ? weightsArray.reduce((acc: number, cur: number) => acc + cur, 0) / weightsArray.length
+            : 1.0;
+
+        return {
+          assignmentId: item.assignmentId,
+          data: {
+            monthlyWeights: updatedWeights,
+            inputRatio: avgRatio
+          }
+        };
+    }).filter((item): item is { assignmentId: string; data: any } => item !== null);
+    
+    if (updates.length > 0) {
+        setUpdatesQueue(updates);
+    }
 
     setEditCell(null);
   };
+
+  useEffect(() => {
+    if (updatesQueue && updatesQueue.length > 0) {
+      const [nextUpdate, ...remainingUpdates] = updatesQueue;
+      
+      updateAssignment(nextUpdate.assignmentId, nextUpdate.data);
+      
+      setUpdatesQueue(remainingUpdates.length > 0 ? remainingUpdates : null);
+    }
+  }, [updatesQueue, updateAssignment]);
 
   const selectedMemberName = selectedMemberId 
     ? (members.find(m => m.id === selectedMemberId)?.name || 'Unknown')
@@ -139,9 +179,20 @@ export const MMAnalysis: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Man-Month 조회 및 분석</h2>
-          <p className="text-slate-500">월별 상세 가중치 기반 인력 투입 현황</p>
+        <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">Man-Month 조회 및 분석</h2>
+              <p className="text-slate-500">월별 상세 가중치 기반 인력 투입 현황</p>
+            </div>
+            <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+                className="bg-white border border-slate-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}년</option>
+              ))}
+            </select>
         </div>
         <Button variant="secondary" onClick={handleExport} className="gap-2">
             <Download size={16} /> Excel Export
@@ -252,19 +303,35 @@ export const MMAnalysis: React.FC = () => {
                                           <div className="text-xs font-bold text-slate-800 truncate">{project?.name}</div>
                                           <div className="text-[10px] text-slate-400">{assignment?.role}</div>
                                       </div>
-                                      <div className="w-24 flex items-center gap-2">
+                                      <div className="w-24 flex items-center gap-2 relative group">
                                           <input 
-                                              type="number" step="0.1" min="0" max="1" 
-                                              className="w-full text-center text-sm font-mono p-1.5 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black"
+                                              type="number" step="0.1" min="0" 
+                                              className={`w-full text-center text-sm font-mono p-1.5 border rounded-md focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black ${item.warning ? 'border-red-500' : 'border-slate-300'}`}
                                               value={item.weight}
                                               onChange={(e) => {
-                                                  const val = parseFloat(e.target.value) || 0;
-                                                  const newWeights = [...tempWeights];
-                                                  newWeights[idx].weight = Math.min(1, Math.max(0, val));
+                                                  const val = parseFloat(e.target.value);
+                                                  const newWeights = tempWeights.map((w, i) => {
+                                                      if (i === idx) {
+                                                          const newWeight = isNaN(val) ? 0 : val;
+                                                          let warningMessage = null;
+                                                          if (newWeight > 1) {
+                                                              warningMessage = "가중치는 1을 초과할 수 없습니다.";
+                                                          } else if (newWeight < 0) {
+                                                              warningMessage = "가중치는 0 미만일 수 없습니다.";
+                                                          }
+                                                          return { ...w, weight: newWeight, warning: warningMessage };
+                                                      }
+                                                      return w;
+                                                  });
                                                   setTempWeights(newWeights);
                                               }}
                                           />
                                           <span className="text-[10px] font-bold text-slate-400">MM</span>
+                                          {item.warning && (
+                                              <div className="absolute hidden group-hover:block bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-red-600 text-white text-[9px] rounded-md shadow-lg z-50 whitespace-nowrap arrow-bottom">
+                                                  {item.warning}
+                                              </div>
+                                          )}
                                       </div>
                                   </div>
                               );

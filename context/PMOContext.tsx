@@ -13,6 +13,7 @@ interface PMOContextType {
   addAssignment: (assignment: Omit<Assignment, 'id'>) => void;
   updateAssignment: (id: string, assignment: Partial<Assignment>) => void;
   deleteAssignment: (id: string) => void;
+  addMember: (member: Omit<Member, 'id'>) => void;
 }
 
 const PMOContext = createContext<PMOContextType | undefined>(undefined);
@@ -20,7 +21,8 @@ const PMOContext = createContext<PMOContextType | undefined>(undefined);
 const INITIAL_PROJECTS: Project[] = [
   { id: 'p1', name: 'NextGen Banking System', code: 'NGB-2026', client: 'K-Bank', type: 'External', orderAmount: 5000000000, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Active' },
   { id: 'p2', name: 'AI Customer Service Bot', code: 'AIC-2026', client: 'Retail Corp', type: 'Internal', orderAmount: 120000000, startDate: '2026-03-01', endDate: '2026-08-31', status: 'Planning' },
-  { id: 'p3', name: 'Internal R&D Framework', code: 'RND-001', client: 'In-House', type: 'Other', orderAmount: 0, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Active' }
+  { id: 'p3', name: 'Internal R&D Framework', code: 'RND-001', client: 'In-House', type: 'Other', orderAmount: 0, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Active' },
+  { id: 'p4', name: 'test', code: 'RND-001', client: 'In-House', type: 'Other', orderAmount: 0, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Active' }
 ];
 
 const INITIAL_MEMBERS: Member[] = [

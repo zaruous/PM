@@ -10,6 +10,8 @@ export const ProjectManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [startDateFilter, setStartDateFilter] = useState('');
+  const [endDateFilter, setEndDateFilter] = useState('');
 
   const [formData, setFormData] = useState<Partial<Project>>({
     name: '', code: '', client: '', type: 'External', orderAmount: 0, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Planning'
@@ -44,11 +46,16 @@ export const ProjectManagement: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const filteredProjects = projects.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProjects = projects.filter(p => {
+    const matchesSearchTerm = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              p.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              p.code.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStartDate = startDateFilter ? new Date(p.startDate) >= new Date(startDateFilter) : true;
+    const matchesEndDate = endDateFilter ? new Date(p.endDate) <= new Date(endDateFilter) : true;
+
+    return matchesSearchTerm && matchesStartDate && matchesEndDate;
+  });
 
   const selectClassName = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black appearance-none";
 
@@ -76,6 +83,22 @@ export const ProjectManagement: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
+            <input 
+              type="date" 
+              className="rounded-md border border-slate-300 px-3 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black"
+              value={startDateFilter}
+              onChange={(e) => setStartDateFilter(e.target.value)}
+            />
+            <span className="text-slate-500">~</span>
+            <input 
+              type="date" 
+              className="rounded-md border border-slate-300 px-3 py-1 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black"
+              value={endDateFilter}
+              onChange={(e) => setEndDateFilter(e.target.value)}
+            />
+            <Button onClick={() => { setStartDateFilter(''); setEndDateFilter(''); }} className="gap-2">
+              <Search size={16} /> 조회
+            </Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">

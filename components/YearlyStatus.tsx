@@ -3,11 +3,12 @@ import { usePMO } from '../context/PMOContext';
 import { Member, Assignment } from '../types';
 import { Button } from './ui/Button';
 import { UserCheck, UserMinus, UserCog, X, ChevronLeft, ChevronRight, Info, Briefcase, Calendar, User, AlertTriangle } from 'lucide-react';
+import { YearSelector } from "./ui/YearSelector";
 
 export const YearlyStatus: React.FC = () => {
   const { members, assignments, projects } = usePMO();
-  const [currentYear, setCurrentYear] = useState(2026);
-  
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cellInfo, setCellInfo] = useState<{ memberName: string; month: string; projects: any[]; totalWeight: number } | null>(null);
 
@@ -116,16 +117,9 @@ export const YearlyStatus: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900">연도별 인력 가동 현황</h2>
           <p className="text-slate-500 text-sm">인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)</p>
         </div>
-        
-        <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-            <button onClick={() => setCurrentYear(currentYear - 1)} className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-                <ChevronLeft size={20} />
-            </button>
-            <span className="font-bold text-lg text-slate-800">{currentYear}년</span>
-            <button onClick={() => setCurrentYear(currentYear + 1)} className="p-1 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
-                <ChevronRight size={20} />
-            </button>
-        </div>
+
+        <YearSelector year={currentYear} onYearChange={ ()=> setCurrentYear(currentYear - 1)}>
+        </YearSelector>
       </div>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
