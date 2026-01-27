@@ -29,6 +29,9 @@ export interface Member {
   name: string;
   position: string;
   skills: string[];
+  employeeNumber?: string;
+  yearOfEmployment?: number;
+  otherNotes?: string;
 }
 
 export interface Assignment {

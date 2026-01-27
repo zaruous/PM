@@ -4,10 +4,11 @@ import { ProjectManagement } from './components/ProjectManagement';
 import { ResourceAllocation } from './components/ResourceAllocation';
 import { MMAnalysis } from './components/MMAnalysis';
 import { YearlyStatus } from './components/YearlyStatus';
-import { LayoutDashboard, Users, PieChart, Layers, CalendarRange } from 'lucide-react';
+import UserRegistration from './components/UserRegistration'; // Import UserRegistration
+import { LayoutDashboard, Users, PieChart, Layers, CalendarRange, UserPlus } from 'lucide-react'; // Import UserPlus icon
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'projects' | 'allocation' | 'analysis' | 'yearly'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'allocation' | 'analysis' | 'yearly' | 'userRegistration'>('projects');
 
   const renderContent = () => {
     switch (activeTab) {
@@ -15,6 +16,7 @@ const App: React.FC = () => {
       case 'allocation': return <ResourceAllocation />;
       case 'analysis': return <MMAnalysis />;
       case 'yearly': return <YearlyStatus />;
+      case 'userRegistration': return <UserRegistration />; // Add new case for UserRegistration
       default: return <ProjectManagement />;
     }
   };
@@ -55,6 +57,13 @@ const App: React.FC = () => {
             >
               <CalendarRange size={20} className="mr-3" />
               Yearly Status
+            </button>
+            <button
+              onClick={() => setActiveTab('userRegistration')}
+              className={`w-full flex items-center px-3 py-2.5 rounded-md transition-colors ${activeTab === 'userRegistration' ? 'bg-indigo-600 text-white' : 'hover:bg-slate-800 hover:text-white'}`}
+            >
+              <UserPlus size={20} className="mr-3" />
+              User Registration
             </button>
           </nav>
           <div className="p-4 border-t border-slate-800">

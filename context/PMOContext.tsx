@@ -42,7 +42,7 @@ const INITIAL_ASSIGNMENTS: Assignment[] = [
 export const PMOProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
-  const [members] = useState<Member[]>(INITIAL_MEMBERS);
+  const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
 
   const addProject = (project: Omit<Project, 'id'>) => setProjects([...projects, { ...project, id: generateId() }]);
   const updateProject = (id: string, updated: Partial<Project>) => setProjects(projects.map(p => p.id === id ? { ...p, ...updated } : p));
@@ -55,8 +55,10 @@ export const PMOProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateAssignment = (id: string, updated: Partial<Assignment>) => setAssignments(assignments.map(a => a.id === id ? { ...a, ...updated } : a));
   const deleteAssignment = (id: string) => setAssignments(assignments.filter(a => a.id !== id));
 
+  const addMember = (member: Omit<Member, 'id'>) => setMembers([...members, { ...member, id: generateId() }]);
+
   return (
-    <PMOContext.Provider value={{ projects, assignments, members, addProject, updateProject, deleteProject, addAssignment, updateAssignment, deleteAssignment }}>
+    <PMOContext.Provider value={{ projects, assignments, members, addProject, updateProject, deleteProject, addAssignment, updateAssignment, deleteAssignment, addMember }}>
       {children}
     </PMOContext.Provider>
   );
