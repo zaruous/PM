@@ -16,12 +16,11 @@ const UserRegistration: React.FC = () => {
     e.preventDefault();
     const newMember: Omit<Member, 'id'> = {
       name,
-      id,
+      position: 'Staff',
+      skills: [],
       employeeNumber,
-      yearOfEmployment: yearOfEmployment ? parseInt(yearOfEmployment) : undefined,
-      otherNotes,
-      position: 'Staff', 
-      skills: [], 
+      yearOfEmployment: yearOfEmployment,
+      otherNotes
     };
     addMember(newMember);
     console.log("New member added:", newMember);

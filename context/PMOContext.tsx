@@ -26,11 +26,11 @@ const INITIAL_PROJECTS: Project[] = [
 ];
 
 const INITIAL_MEMBERS: Member[] = [
-  { id: 'm1', name: 'Kim Min-su', position: 'Senior', skills: ['React', 'Node', 'AWS'] },
-  { id: 'm2', name: 'Lee Ji-young', position: 'Lead', skills: ['Java', 'Spring', 'Architecture'] },
-  { id: 'm3', name: 'Park Jun-ho', position: 'Senior', skills: ['Python', 'AI', 'TensorFlow'] },
-  { id: 'm4', name: 'Choi Su-jin', position: 'Junior', skills: ['UI/UX', 'Figma', 'CSS'] },
-  { id: 'm5', name: 'Jung Tae-woo', position: 'Senior', skills: ['DevOps', 'Docker', 'K8s'] },
+  { id: 'm1', name: 'Kim Min-su', yearOfEmployment:'2026-01-27', position: 'Senior', skills: ['React', 'Node', 'AWS'] , otherNotes:''},
+  { id: 'm2', name: 'Lee Ji-young', yearOfEmployment:'2026-01-27', position: 'Lead', skills: ['Java', 'Spring', 'Architecture'], otherNotes:'' },
+  { id: 'm3', name: 'Park Jun-ho', yearOfEmployment:'2026-01-27',position: 'Senior', skills: ['Python', 'AI', 'TensorFlow'] , otherNotes:''},
+  { id: 'm4', name: 'Choi Su-jin', yearOfEmployment:'2026-01-27', position: 'Junior', skills: ['UI/UX', 'Figma', 'CSS'] , otherNotes:''},
+  { id: 'm5', name: 'Jung Tae-woo', yearOfEmployment:'2026-01-27', position: 'Senior', skills: ['DevOps', 'Docker', 'K8s'], otherNotes:'' },
 ];
 
 const INITIAL_ASSIGNMENTS: Assignment[] = [

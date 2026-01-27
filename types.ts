@@ -30,7 +30,7 @@ export interface Member {
   position: string;
   skills: string[];
   employeeNumber?: string;
-  yearOfEmployment?: number;
+  yearOfEmployment?: string;
   otherNotes?: string;
 }
 
