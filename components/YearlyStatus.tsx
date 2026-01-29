@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { usePMO } from '../context/PMOContext';
 import { Member, Assignment } from '../types';
 import { Button } from './ui/Button';
-import { UserCheck, UserMinus, UserCog, X, Info, Briefcase, Calendar, User, AlertTriangle } from 'lucide-react';
+import { UserCheck, UserMinus, UserCog, X, Info, Briefcase, Calendar, User, AlertTriangle, FileDown } from 'lucide-react';
 import { YearSelector } from "./ui/YearSelector";
+import * as XLSX from 'xlsx';
 
 export const YearlyStatus: React.FC = () => {
   const { members, assignments, projects } = usePMO();
@@ -110,6 +111,108 @@ export const YearlyStatus: React.FC = () => {
     }
   };
 
+  const handleExcelExport = () => {
+    const statusColors: { [key: string]: string } = {
+        Overloaded: 'ef4444', // red-500
+        FullBillable: '059669', // emerald-600
+        PartialBillable: '6ee7b7', // emerald-300
+        Active: '60a5fa', // blue-400
+        Unassigned: 'f1f5f9' // slate-100
+    };
+
+    const header = ['성명 / 직급', ...months.map(m => `${m.split('-')[1]}월`)];
+    
+    const data = memberStatusData.map(member => {
+        const row: { [key: string]: any } = { '성명 / 직급': `${member.name} / ${member.position}` };
+        member.statusRow.forEach(status => {
+            row[`${status.month.split('-')[1]}월`] = status.label;
+        });
+        return row;
+    });
+
+    const ws_data: any[][] = [];
+
+    // 1. Title
+    ws_data.push([`연도별 인력 가동 현황 (${currentYear})`]);
+    ws_data.push([`인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)`]);
+    ws_data.push([]); // Spacer
+
+    // 2. Legend
+    const legend = [
+        { status: '과부하 (MM > 1.0)', color: statusColors.Overloaded },
+        { status: '가득 (MM = 1.0)', color: statusColors.FullBillable },
+        { status: '부분가득 (MM < 1.0)', color: statusColors.PartialBillable },
+        { status: '가동 (Active/Other)', color: statusColors.Active },
+        { status: '비가득 (Unassigned)', color: statusColors.Unassigned }
+    ];
+    ws_data.push(['범례']);
+    legend.forEach(item => {
+        ws_data.push([item.status]);
+    });
+    ws_data.push([]); // Spacer
+
+    // 3. Header
+    ws_data.push(header);
+
+    // 4. Body
+    const bodyRows = memberStatusData.map(member => {
+        const row = [`${member.name} / ${member.position}`];
+        member.statusRow.forEach(status => {
+            row.push(status.label);
+        });
+        return row;
+    });
+    ws_data.push(...bodyRows);
+    
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // Style and coloring
+    const legendStartRow = 4;
+    legend.forEach((item, index) => {
+        const cell = ws[XLSX.utils.encode_cell({ r: legendStartRow + index, c: 0 })];
+        if (cell) {
+            cell.s = { fill: { fgColor: { rgb: item.color } }, font: { color: { rgb: item.color === "f1f5f9" ? "000000" : "FFFFFF" } } };
+        }
+    });
+    
+    const dataStartRow = legendStartRow + legend.length + 2;
+    memberStatusData.forEach((member, r_idx) => {
+        member.statusRow.forEach((status, c_idx) => {
+            const cell = ws[XLSX.utils.encode_cell({ r: dataStartRow + r_idx, c: c_idx + 1 })];
+            if (cell) {
+                cell.s = { 
+                    fill: { fgColor: { rgb: statusColors[status.type] } },
+                    font: { color: { rgb: status.type === 'Unassigned' || status.type === 'PartialBillable' ? '000000' : 'FFFFFF' } },
+                    alignment: { horizontal: 'center', vertical: 'center' }
+                };
+            }
+        });
+    });
+     // Header Style
+    header.forEach((h, i) => {
+      const cell = ws[XLSX.utils.encode_cell({r: dataStartRow -1, c: i})];
+      if (cell) {
+        cell.s = { font: { bold: true }, alignment: { horizontal: 'center' } };
+      }
+    });
+
+
+    // Merges
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: header.length - 1 } }, // Title
+        { s: { r: 1, c: 0 }, e: { r: 1, c: header.length - 1 } }, // Subtitle
+    ];
+    
+    // Column Widths
+    ws['!cols'] = [{ wch: 25 }, ...Array(12).fill({ wch: 10 })];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Yearly Status");
+    
+    XLSX.writeFile(wb, `yearly_status_${currentYear}.xlsx`);
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -117,9 +220,13 @@ export const YearlyStatus: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-900">연도별 인력 가동 현황</h2>
           <p className="text-slate-500 text-sm">인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)</p>
         </div>
-
-        <YearSelector year={currentYear} onYearChange={(newYear) => setCurrentYear(newYear)}>
-        </YearSelector>
+        <div className='flex items-center gap-2'>
+            <YearSelector year={currentYear} onYearChange={(newYear) => setCurrentYear(newYear)} />
+            <Button variant="outline" onClick={handleExcelExport} className="gap-2">
+                <FileDown size={14} />
+                Excel 내보내기
+            </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
