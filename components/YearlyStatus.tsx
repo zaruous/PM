@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 
 export const YearlyStatus: React.FC = () => {
   const { members, assignments, projects } = usePMO();
-  const [currentYear, setCurrentYear] = useState(2026);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cellInfo, setCellInfo] = useState<{ memberName: string; month: string; projects: any[]; totalWeight: number } | null>(null);
