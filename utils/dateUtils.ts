@@ -1,4 +1,3 @@
-import { Assignment } from '../types';
 
 export const getMonthList = (start: string, end: string): string[] => {
   const startDate = new Date(start);
@@ -38,5 +37,3 @@ export const calculateMM = (start: string, end: string, ratio: number = 1.0): nu
 export const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(amount);
 };
-
-export const generateId = () => Math.random().toString(36).substr(2, 9);

@@ -2,12 +2,12 @@ import React, { useMemo, useState } from 'react';
 import { usePMO } from '../context/PMOContext';
 import { Member, Assignment } from '../types';
 import { Button } from './ui/Button';
-import { UserCheck, UserMinus, UserCog, X, ChevronLeft, ChevronRight, Info, Briefcase, Calendar, User, AlertTriangle } from 'lucide-react';
+import { UserCheck, UserMinus, UserCog, X, Info, Briefcase, Calendar, User, AlertTriangle } from 'lucide-react';
 import { YearSelector } from "./ui/YearSelector";
 
 export const YearlyStatus: React.FC = () => {
   const { members, assignments, projects } = usePMO();
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentYear, setCurrentYear] = useState(2026);
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [cellInfo, setCellInfo] = useState<{ memberName: string; month: string; projects: any[]; totalWeight: number } | null>(null);
@@ -23,18 +23,18 @@ export const YearlyStatus: React.FC = () => {
     return members.map(mem => {
         const monthlyStatus = months.map(month => {
             const activeAssignments = assignments.filter(a => 
-                a.memberId === mem.id && 
-                (a.monthlyWeights[month] !== undefined && a.monthlyWeights[month] > 0)
+                a.member_id === mem.id && 
+                (a.monthly_weights[month] !== undefined && a.monthly_weights[month] > 0)
             );
 
-            const totalWeight = activeAssignments.reduce((sum, a) => sum + (a.monthlyWeights[month] || 0), 0);
+            const totalWeight = activeAssignments.reduce((sum, a) => sum + (a.monthly_weights[month] || 0), 0);
 
             let statusType = 'Unassigned';
             let label = '비가득';
 
             if (activeAssignments.length > 0) {
                 const hasBillable = activeAssignments.some(a => {
-                    const project = projects.find(p => p.id === a.projectId);
+                    const project = projects.find(p => p.id === a.project_id);
                     return project && (project.type === 'Internal' || project.type === 'External');
                 });
 
@@ -75,20 +75,20 @@ export const YearlyStatus: React.FC = () => {
     if (!monthData.activeAssignments || monthData.activeAssignments.length === 0) return;
 
     const projectDetails = monthData.activeAssignments.map((a: Assignment) => {
-        const project = projects.find(p => p.id === a.projectId);
-        const pmAssignment = assignments.find(pa => pa.projectId === project?.id && pa.role === 'PM');
-        const plAssignment = assignments.find(pa => pa.projectId === project?.id && pa.role === 'PL');
+        const project = projects.find(p => p.id === a.project_id);
+        const pmAssignment = assignments.find(pa => pa.project_id === project?.id && pa.role === 'PM');
+        const plAssignment = assignments.find(pa => pa.project_id === project?.id && pa.role === 'PL');
         
         return {
             name: project?.name || 'Unknown Project',
             code: project?.code || 'N/A',
-            startDate: project?.startDate || '',
-            endDate: project?.endDate || '',
-            pm: pmAssignment ? pmAssignment.memberName : 'N/A',
-            pl: plAssignment ? plAssignment.memberName : 'N/A',
+            start_date: project?.start_date || '',
+            end_date: project?.end_date || '',
+            pm: pmAssignment ? pmAssignment.member_name : 'N/A',
+            pl: plAssignment ? plAssignment.member_name : 'N/A',
             myRole: a.role,
             type: project?.type || 'Other',
-            weight: a.monthlyWeights[monthData.month] || 0
+            weight: a.monthly_weights[monthData.month] || 0
         };
     });
 
@@ -118,7 +118,7 @@ export const YearlyStatus: React.FC = () => {
           <p className="text-slate-500 text-sm">인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)</p>
         </div>
 
-        <YearSelector year={currentYear} onYearChange={ ()=> setCurrentYear(currentYear - 1)}>
+        <YearSelector year={currentYear} onYearChange={(newYear) => setCurrentYear(newYear)}>
         </YearSelector>
       </div>
 
@@ -262,7 +262,7 @@ export const YearlyStatus: React.FC = () => {
                                       <Calendar size={14} className="text-slate-400 mt-0.5 shrink-0" />
                                       <div>
                                           <div className="text-[10px] text-slate-400 font-bold uppercase">기간</div>
-                                          <div className="text-[11px] text-slate-700 font-medium">{proj.startDate} ~ {proj.endDate}</div>
+                                          <div className="text-[11px] text-slate-700 font-medium">{proj.start_date} ~ {proj.end_date}</div>
                                       </div>
                                   </div>
                                   <div className="flex items-start gap-2">

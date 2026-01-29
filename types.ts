@@ -18,9 +18,9 @@ export interface Project {
   code: string;
   client: string;
   type: ProjectType;
-  orderAmount: number; 
-  startDate: string;
-  endDate: string;
+  order_amount: number; 
+  start_date: string;
+  end_date: string;
   status: 'Planning' | 'Active' | 'Completed' | 'On Hold';
 }
 
@@ -29,21 +29,21 @@ export interface Member {
   name: string;
   position: string;
   skills: string[];
-  employeeNumber?: string;
-  yearOfEmployment?: string;
-  otherNotes?: string;
+  employee_number?: string;
+  join_date?: string;
+  note?: string;
 }
 
 export interface Assignment {
   id: string;
-  projectId: string;
-  memberId: string;
-  memberName: string;
+  project_id: string;
+  member_id: string;
+  member_name: string;
   role: Role;
-  startDate: string;
-  endDate: string;
-  inputRatio: number; // 기본 가중치 (전체 평균용)
-  monthlyWeights: { [month: string]: number }; // 상세 월별 가중치 (YYYY-MM 형식)
+  start_date: string;
+  end_date: string;
+  input_ratio: number;
+  monthly_weights: { [month: string]: number };
 }
 
 export interface MonthlyMM {

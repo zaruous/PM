@@ -1,25 +1,33 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePMO } from '../context/PMOContext';
 import { Member } from '../types';
 import { Button } from './ui/Button';
-import { Plus, Edit2, Trash2, X, Search, User, Key, IdCard, Calendar, FileText } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, User, Key, IdCard, Calendar, FileText, Loader } from 'lucide-react';
 
 export const UserManagement: React.FC = () => {
-  const { members, addMember, updateMember, deleteMember } = usePMO();
+  const { members, addMember, updateMember, deleteMember, positionLevels } = usePMO();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [formData, setFormData] = useState<Partial<Member>>({
     name: '',
-    loginId: '',
-    employeeNumber: '',
-    position: 'Junior',
+    position: '',
     skills: [],
-    joinDate: '',
+    employee_number: '',
+    join_date: '',
     note: ''
   });
+
+  useEffect(() => {
+    // Set default position when position levels are loaded
+    if (positionLevels.length > 0 && !formData.position) {
+      setFormData(prev => ({ ...prev, position: positionLevels[0] }));
+    }
+  }, [positionLevels, formData.position]);
+
 
   const [skillInput, setSkillInput] = useState('');
 
@@ -32,11 +40,10 @@ export const UserManagement: React.FC = () => {
       setEditingMember(null);
       setFormData({
         name: '',
-        loginId: '',
-        employeeNumber: '',
-        position: 'Junior',
+        position: positionLevels.length > 0 ? positionLevels[0] : '',
         skills: [],
-        joinDate: new Date().toISOString().split('T')[0], // Default to today
+        employee_number: '',
+        join_date: new Date().toISOString().split('T')[0],
         note: ''
       });
       setSkillInput('');
@@ -61,23 +68,41 @@ export const UserManagement: React.FC = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate required fields
     if (!formData.name || !formData.position) return;
+    
+    setIsSubmitting(true);
+    const finalData = { ...formData };
 
-    if (editingMember) {
-      updateMember(editingMember.id, formData);
-    } else {
-      addMember(formData as Omit<Member, 'id'>);
+    try {
+        if (editingMember) {
+            await updateMember(editingMember.id, finalData);
+        } else {
+            await addMember(finalData as Omit<Member, 'id'>);
+        }
+        setIsModalOpen(false);
+    } catch (error: any) {
+        console.error("Failed to save member", error);
+        alert(`Error saving member: ${error.message}`);
+    } finally {
+        setIsSubmitting(false);
     }
-    setIsModalOpen(false);
+  };
+  
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this member?')) {
+        try {
+            await deleteMember(id);
+        } catch (error) {
+            console.error("Failed to delete member", error);
+        }
+    }
   };
 
   const filteredMembers = members.filter(m =>
       m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (m.loginId && m.loginId.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (m.employeeNumber && m.employeeNumber.includes(searchTerm))
+      (m.employee_number && m.employee_number.includes(searchTerm))
   );
 
   const selectClassName = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-black appearance-none";
@@ -101,7 +126,7 @@ export const UserManagement: React.FC = () => {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
               <input
                   type="text"
-                  placeholder="성명, ID, 사번 검색..."
+                  placeholder="성명, 사번 검색..."
                   className="pl-9 w-full h-9 rounded-md border border-slate-300 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -113,7 +138,7 @@ export const UserManagement: React.FC = () => {
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3">성명 / 직급</th>
-                <th className="px-6 py-3">ID / 사번</th>
+                <th className="px-6 py-3">사번</th>
                 <th className="px-6 py-3">보유 기술 (Skills)</th>
                 <th className="px-6 py-3">입사일 / 기타</th>
                 <th className="px-6 py-3 text-right">관리</th>
@@ -135,8 +160,7 @@ export const UserManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-xs font-mono text-slate-600 flex items-center gap-1"><User size={10} /> {member.loginId || '-'}</span>
-                        <span className="text-xs font-mono text-slate-400 flex items-center gap-1"><IdCard size={10} /> {member.employeeNumber || '-'}</span>
+                        <span className="text-xs font-mono text-slate-400 flex items-center gap-1"><IdCard size={10} /> {member.employee_number || '-'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -151,7 +175,7 @@ export const UserManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs text-slate-600 space-y-1">
-                        <div className="flex items-center gap-1"><Calendar size={12} className="text-slate-400"/> {member.joinDate || '-'}</div>
+                        <div className="flex items-center gap-1"><Calendar size={12} className="text-slate-400"/> {member.join_date || '-'}</div>
                         {member.note && <div className="flex items-center gap-1 text-slate-400 truncate max-w-[150px]" title={member.note}><FileText size={12}/> {member.note}</div>}
                       </div>
                     </td>
@@ -159,7 +183,7 @@ export const UserManagement: React.FC = () => {
                       <button onClick={() => handleOpenModal(member)} className="text-slate-400 hover:text-indigo-600">
                         <Edit2 size={18} />
                       </button>
-                      <button onClick={() => deleteMember(member.id)} className="text-slate-400 hover:text-red-600">
+                      <button onClick={() => handleDelete(member.id)} className="text-slate-400 hover:text-red-600">
                         <Trash2 size={18} />
                       </button>
                     </td>
@@ -189,7 +213,6 @@ export const UserManagement: React.FC = () => {
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                    {/* Basic Info */}
                     <div className="col-span-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1 mb-1">기본 정보</div>
 
                     <div>
@@ -201,29 +224,18 @@ export const UserManagement: React.FC = () => {
                       <label className="block text-sm font-semibold text-slate-700 mb-1">직급 <span className="text-red-500">*</span></label>
                       <select className={selectClassName}
                               value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})}>
-                        <option value="Intern">Intern</option>
-                        <option value="Junior">Junior</option>
-                        <option value="Senior">Senior</option>
-                        <option value="Lead">Lead</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Director">Director</option>
+                        {positionLevels.map((level) => (
+                          <option key={level} value={level}>{level}</option>
+                        ))}
                       </select>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">아이디 (ID)</label>
-                      <div className="relative">
-                        <Key size={14} className="absolute left-3 top-3 text-slate-400" />
-                        <input type="text" className={`${inputClassName} pl-9`} placeholder="user.id"
-                               value={formData.loginId} onChange={e => setFormData({...formData, loginId: e.target.value})} />
-                      </div>
-                    </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">사번 (Employee No)</label>
                       <div className="relative">
                         <IdCard size={14} className="absolute left-3 top-3 text-slate-400" />
                         <input type="text" className={`${inputClassName} pl-9`} placeholder="2026001"
-                               value={formData.employeeNumber} onChange={e => setFormData({...formData, employeeNumber: e.target.value})} />
+                               value={formData.employee_number} onChange={e => setFormData({...formData, employee_number: e.target.value})} />
                       </div>
                     </div>
 
@@ -232,7 +244,7 @@ export const UserManagement: React.FC = () => {
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">입사일</label>
                       <input type="date" className={inputClassName}
-                             value={formData.joinDate} onChange={e => setFormData({...formData, joinDate: e.target.value})} />
+                             value={formData.join_date} onChange={e => setFormData({...formData, join_date: e.target.value})} />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">기술 스택</label>
@@ -265,7 +277,10 @@ export const UserManagement: React.FC = () => {
 
                   <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
                     <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>취소</Button>
-                    <Button variant="primary" type="submit">저장</Button>
+                    <Button variant="primary" type="submit" disabled={isSubmitting}>
+                        {isSubmitting && <Loader size={16} className="animate-spin mr-2" />}
+                        저장
+                    </Button>
                   </div>
                 </form>
               </div>

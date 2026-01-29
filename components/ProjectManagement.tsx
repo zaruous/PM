@@ -3,47 +3,70 @@ import { usePMO } from '../context/PMOContext';
 import { Project, ProjectType } from '../types';
 import { formatCurrency } from '../utils/dateUtils';
 import { Button } from './ui/Button';
-import { Plus, Edit2, Trash2, X, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Search, Loader } from 'lucide-react';
 
 export const ProjectManagement: React.FC = () => {
   const { projects, addProject, updateProject, deleteProject } = usePMO();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
 
   const [formData, setFormData] = useState<Partial<Project>>({
-    name: '', code: '', client: '', type: 'External', orderAmount: 0, startDate: '2026-01-01', endDate: '2026-12-31', status: 'Planning'
+    name: '', code: '', client: '', type: 'External', order_amount: 0, start_date: '2026-01-01', end_date: '2026-12-31', status: 'Planning'
   });
 
   const handleOpenModal = (project?: Project) => {
     if (project) {
       setEditingProject(project);
-      setFormData(project);
+      setFormData({
+          ...project,
+          order_amount: project.order_amount || 0, // Ensure order_amount is a number
+      });
     } else {
       setEditingProject(null);
       setFormData({ 
-        name: '', code: '', client: '', type: 'External', orderAmount: 0, 
-        startDate: '2026-01-01', endDate: '2026-12-31', status: 'Planning' 
+        name: '', code: '', client: '', type: 'External', order_amount: 0, 
+        start_date: '2026-01-01', end_date: '2026-12-31', status: 'Planning' 
       });
     }
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const isOther = formData.type === 'Other';
     const finalData = {
       ...formData,
-      orderAmount: isOther ? 0 : Number(formData.orderAmount || 0)
+      order_amount: isOther ? 0 : Number(formData.order_amount || 0)
     };
-    if (editingProject) {
-      updateProject(editingProject.id, finalData);
-    } else {
-      addProject(finalData as Omit<Project, 'id'>);
+
+    try {
+        if (editingProject) {
+            await updateProject(editingProject.id, finalData);
+        } else {
+            await addProject(finalData as Omit<Project, 'id'>);
+        }
+        setIsModalOpen(false);
+    } catch (error: any) {
+        console.error("Failed to save project", error);
+        alert(`Error saving project: ${error.message}`);
+    } finally {
+        setIsSubmitting(false);
     }
-    setIsModalOpen(false);
+  };
+  
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this project?')) {
+        try {
+            await deleteProject(id);
+        } catch (error) {
+            console.error("Failed to delete project", error);
+        }
+    }
   };
 
   const filteredProjects = projects.filter(p => {
@@ -51,8 +74,8 @@ export const ProjectManagement: React.FC = () => {
                               p.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               p.code.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStartDate = startDateFilter ? new Date(p.startDate) >= new Date(startDateFilter) : true;
-    const matchesEndDate = endDateFilter ? new Date(p.endDate) <= new Date(endDateFilter) : true;
+    const matchesStartDate = startDateFilter ? new Date(p.start_date) >= new Date(startDateFilter) : true;
+    const matchesEndDate = endDateFilter ? new Date(p.end_date) <= new Date(endDateFilter) : true;
 
     return matchesSearchTerm && matchesStartDate && matchesEndDate;
   });
@@ -132,10 +155,10 @@ export const ProjectManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-slate-600 text-xs">
-                    {project.startDate} ~ <br/> {project.endDate}
+                    {project.start_date} ~ <br/> {project.end_date}
                   </td>
                   <td className="px-6 py-4 font-mono font-medium">
-                    {project.type === 'Other' ? '-' : formatCurrency(project.orderAmount)}
+                    {project.type === 'Other' ? '-' : formatCurrency(project.order_amount)}
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-xs font-medium px-2 py-1 rounded bg-slate-100 border border-slate-200">
@@ -146,7 +169,7 @@ export const ProjectManagement: React.FC = () => {
                     <button onClick={() => handleOpenModal(project)} className="text-slate-400 hover:text-indigo-600">
                       <Edit2 size={18} />
                     </button>
-                    <button onClick={() => deleteProject(project.id)} className="text-slate-400 hover:text-red-600">
+                    <button onClick={() => handleDelete(project.id)} className="text-slate-400 hover:text-red-600">
                       <Trash2 size={18} />
                     </button>
                   </td>
@@ -208,23 +231,26 @@ export const ProjectManagement: React.FC = () => {
                   <div className="col-span-2">
                     <label className="block text-sm font-semibold text-slate-700 mb-1">수주금액 (KRW)</label>
                     <input type="number" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
-                      value={formData.orderAmount} onChange={e => setFormData({...formData, orderAmount: Number(e.target.value)})} />
+                      value={formData.order_amount} onChange={e => setFormData({...formData, order_amount: Number(e.target.value)})} />
                   </div>
                 )}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">시작일</label>
                   <input type="date" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
-                    value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+                    value={formData.start_date} onChange={e => setFormData({...formData, start_date: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">종료일</label>
                   <input type="date" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" 
-                    value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} />
+                    value={formData.end_date} onChange={e => setFormData({...formData, end_date: e.target.value})} />
                 </div>
               </div>
               <div className="pt-4 flex justify-end gap-3">
                 <Button variant="secondary" type="button" onClick={() => setIsModalOpen(false)}>취소</Button>
-                <Button variant="primary" type="submit">저장</Button>
+                <Button variant="primary" type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader size={16} className="animate-spin mr-2" />}
+                  저장
+                </Button>
               </div>
             </form>
           </div>

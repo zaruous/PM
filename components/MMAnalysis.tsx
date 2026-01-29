@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { usePMO } from '../context/PMOContext';
 import { getMonthList } from '../utils/dateUtils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from './ui/Button';
-import { Download, Users, LayoutDashboard, X, Save, Edit2 } from 'lucide-react';
+import { Download, Users, LayoutDashboard, X, Save, Edit2, Loader } from 'lucide-react';
 
 export const MMAnalysis: React.FC = () => {
   const { assignments, members, projects, updateAssignment } = usePMO();
@@ -11,13 +11,13 @@ export const MMAnalysis: React.FC = () => {
   
   const [editCell, setEditCell] = useState<{ memberId: string; month: string } | null>(null);
   const [tempWeights, setTempWeights] = useState<{ assignmentId: string; weight: number; warning: string | null }[]>([]);
-  const [updatesQueue, setUpdatesQueue] = useState<{assignmentId: string; data: any}[] | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     assignments.forEach(a => {
-        years.add(new Date(a.startDate).getFullYear());
-        years.add(new Date(a.endDate).getFullYear());
+        years.add(new Date(a.start_date).getFullYear());
+        years.add(new Date(a.end_date).getFullYear());
     });
     if (years.size === 0) {
         return [new Date().getFullYear()];
@@ -41,13 +41,13 @@ export const MMAnalysis: React.FC = () => {
         let active = 0;
         
         const targetAssignments = selectedMemberId 
-            ? assignments.filter(a => a.memberId === selectedMemberId)
+            ? assignments.filter(a => a.member_id === selectedMemberId)
             : assignments;
 
         targetAssignments.forEach(a => {
-            const weight = a.monthlyWeights[m] || 0;
+            const weight = a.monthly_weights[m] || 0;
             if (weight > 0) {
-                const project = projects.find(p => p.id === a.projectId);
+                const project = projects.find(p => p.id === a.project_id);
                 const isBillable = project && (project.type === 'External' || project.type === 'Internal');
                 if (isBillable) {
                     billable += weight;
@@ -71,9 +71,9 @@ export const MMAnalysis: React.FC = () => {
         
         months.forEach(m => {
             let monthSum = 0;
-            const memAssignments = assignments.filter(a => a.memberId === mem.id);
+            const memAssignments = assignments.filter(a => a.member_id === mem.id);
             memAssignments.forEach(a => {
-                monthSum += (a.monthlyWeights[m] || 0);
+                monthSum += (a.monthly_weights[m] || 0);
             });
             row[m] = Number(monthSum.toFixed(2));
             totalMM += monthSum;
@@ -82,8 +82,8 @@ export const MMAnalysis: React.FC = () => {
         row.total = Number(totalMM.toFixed(2));
         
         const hasBillable = assignments.some(a => 
-            a.memberId === mem.id && 
-            projects.some(p => p.id === a.projectId && (p.type === 'External' || p.type === 'Internal'))
+            a.member_id === mem.id && 
+            projects.some(p => p.id === a.project_id && (p.type === 'External' || p.type === 'Internal'))
         );
 
         if (row.total === 0) {
@@ -119,7 +119,7 @@ export const MMAnalysis: React.FC = () => {
   const handleCellClick = (e: React.MouseEvent, memberId: string, month: string) => {
     e.stopPropagation();
     const relevantAssignments = assignments.filter(a => 
-        a.memberId === memberId && (a.monthlyWeights[month] !== undefined || (month >= a.startDate.slice(0,7) && month <= a.endDate.slice(0,7)))
+        a.member_id === memberId && (a.monthly_weights[month] !== undefined || (month >= a.start_date.slice(0,7) && month <= a.end_date.slice(0,7)))
     );
     
     if (relevantAssignments.length === 0) return;
@@ -127,50 +127,43 @@ export const MMAnalysis: React.FC = () => {
     setEditCell({ memberId, month });
     setTempWeights(relevantAssignments.map(a => ({
         assignmentId: a.id,
-        weight: a.monthlyWeights[month] ?? 0,
+        weight: a.monthly_weights[month] ?? 0,
         warning: null
     })));
   };
 
-  const handleSaveWeights = () => {
+  const handleSaveWeights = async () => {
     if (!editCell) return;
+    setIsSubmitting(true);
 
-    const updates = tempWeights.map(item => {
+    const updatePromises = tempWeights.map(item => {
         const assignment = assignments.find(a => a.id === item.assignmentId);
-        if (!assignment) return null;
+        if (!assignment) return Promise.resolve();
 
         const weightToSave = Math.min(1.0, Math.max(0.0, item.weight));
-        const updatedWeights = { ...assignment.monthlyWeights, [editCell.month]: weightToSave };
+        const updatedWeights = { ...assignment.monthly_weights, [editCell.month]: weightToSave };
         const weightsArray = Object.values(updatedWeights) as number[];
         const avgRatio = weightsArray.length > 0
             ? weightsArray.reduce((acc: number, cur: number) => acc + cur, 0) / weightsArray.length
             : 1.0;
 
-        return {
-          assignmentId: item.assignmentId,
-          data: {
-            monthlyWeights: updatedWeights,
-            inputRatio: avgRatio
-          }
+        const payload = {
+            monthly_weights: updatedWeights,
+            input_ratio: avgRatio
         };
-    }).filter((item): item is { assignmentId: string; data: any } => item !== null);
-    
-    if (updates.length > 0) {
-        setUpdatesQueue(updates);
-    }
 
-    setEditCell(null);
+        return updateAssignment(item.assignmentId, payload);
+    });
+
+    try {
+        await Promise.all(updatePromises);
+    } catch(error) {
+        console.error("Failed to update weights", error);
+    } finally {
+        setIsSubmitting(false);
+        setEditCell(null);
+    }
   };
-
-  useEffect(() => {
-    if (updatesQueue && updatesQueue.length > 0) {
-      const [nextUpdate, ...remainingUpdates] = updatesQueue;
-      
-      updateAssignment(nextUpdate.assignmentId, nextUpdate.data);
-      
-      setUpdatesQueue(remainingUpdates.length > 0 ? remainingUpdates : null);
-    }
-  }, [updatesQueue, updateAssignment]);
 
   const selectedMemberName = selectedMemberId 
     ? (members.find(m => m.id === selectedMemberId)?.name || 'Unknown')
@@ -296,7 +289,7 @@ export const MMAnalysis: React.FC = () => {
                       <div className="space-y-3">
                           {tempWeights.map((item, idx) => {
                               const assignment = assignments.find(a => a.id === item.assignmentId);
-                              const project = projects.find(p => p.id === assignment?.projectId);
+                              const project = projects.find(p => p.id === assignment?.project_id);
                               return (
                                   <div key={item.assignmentId} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-slate-50/50">
                                       <div className="flex-1 min-w-0 pr-4">
@@ -339,8 +332,9 @@ export const MMAnalysis: React.FC = () => {
                       </div>
                       <div className="pt-4 flex gap-2">
                           <Button variant="secondary" className="flex-1" onClick={() => setEditCell(null)}>취소</Button>
-                          <Button variant="primary" className="flex-1 gap-2" onClick={handleSaveWeights}>
-                              <Save size={16} /> 변경사항 저장
+                          <Button variant="primary" className="flex-1 gap-2" onClick={handleSaveWeights} disabled={isSubmitting}>
+                              {isSubmitting && <Loader size={16} className="animate-spin mr-2" />}
+                              변경사항 저장
                           </Button>
                       </div>
                   </div>
