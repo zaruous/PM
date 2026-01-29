@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { usePMO } from '../context/PMOContext';
 import { Member } from '../types';
 import { Button } from './ui/Button';
@@ -11,7 +11,8 @@ export const UserManagement: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-
+  //사번객체
+  const employeeNumber = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState<Partial<Member>>({
     name: '',
     position: '',
@@ -70,7 +71,13 @@ export const UserManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.position) return;
+    if (!formData.name || !formData.position){
+      return;
+    }
+    if (!formData.employee_number){
+      return;
+    }
+
     
     setIsSubmitting(true);
     const finalData = { ...formData };
@@ -222,7 +229,7 @@ export const UserManagement: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-1">직급 <span className="text-red-500">*</span></label>
-                      <select className={selectClassName}
+                      <select required className={selectClassName}
                               value={formData.position} onChange={e => setFormData({...formData, position: e.target.value})}>
                         {positionLevels.map((level) => (
                           <option key={level} value={level}>{level}</option>
@@ -231,10 +238,10 @@ export const UserManagement: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-1">사번 (Employee No)</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">사번 <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <IdCard size={14} className="absolute left-3 top-3 text-slate-400" />
-                        <input type="text" className={`${inputClassName} pl-9`} placeholder="2026001"
+                        <input required ref={employeeNumber} type="text" className={`${inputClassName} pl-9`} placeholder="2026001"
                                value={formData.employee_number} onChange={e => setFormData({...formData, employee_number: e.target.value})} />
                       </div>
                     </div>

@@ -36,6 +36,13 @@ PMO Suite는 프로젝트 관리 오피스(PMO)를 위한 웹 기반 대시보�
     *   **멤버 정보 팝업**: 멤버 이름 클릭 시 스킬 및 직급 상세 조회.
     *   **투입 상세 팝업**: 월별 셀 클릭 시 해당 월에 투입된 프로젝트 정보(PM, 본인 역할, 기간 등) 조회.
 
+### 5. 인력 관리 (User Management)
+*   **CRUD 기능**: 인력 정보의 생성, 수정, 삭제 및 조회.
+*   **상세 정보 관리**:
+    *   이름, 직급(Position), 스킬(Skills), 사번, 입사일, 메모 등 관리.
+    *   직급은 설정된 레벨 (e.g., 사원, 선임, 책임) 중에서 선택 가능.
+*   **검색 및 필터링**: 이름, 사번으로 인력 검색.
+
 ---
 
 ## 🛠 기술 스택
@@ -76,19 +83,22 @@ npm run dev
 ## 📂 폴더 구조
 
 ```
-src/
 ├── components/
 │   ├── ui/
-│   │   └── Button.tsx
-│   ├── MMAnalysis.tsx      # MM 분석 화면
-│   ├── ProjectManagement.tsx # 프로젝트 관리 화면
-│   ├── ResourceAllocation.tsx # 인력 할당 화면
-│   └── YearlyStatus.tsx    # 연간 현황 화면
+│   │   ├── Button.tsx
+│   │   └── YearSelector.tsx
+│   ├── MMAnalysis.tsx
+│   ├── ProjectManagement.tsx
+│   ├── ResourceAllocation.tsx
+│   ├── UserManagement.tsx
+│   └── YearlyStatus.tsx
 ├── context/
-│   └── PMOContext.tsx      # 전역 상태 관리 (데이터 저장소)
+│   └── PMOContext.tsx
+├── services/
+│   └── api.ts
 ├── utils/
-│   └── dateUtils.ts        # 날짜 및 계산 유틸리티
-├── types.ts                # TypeScript 인터페이스 정의
-├── App.tsx                 # 메인 레이아웃 및 라우팅
-└── index.tsx               # 진입점
+│   └── dateUtils.ts
+├── types.ts
+├── App.tsx
+└── index.tsx
 ```
