@@ -222,7 +222,7 @@ export const MMAnalysis: React.FC = () => {
             <span className="text-xs font-bold text-slate-600">인원별 월별 MM 매트릭스 (셀 클릭 시 가중치 수정)</span>
             <div className="flex gap-4 text-[10px] font-bold">
                 <span className="flex items-center gap-1 text-emerald-600"><span className="w-2 h-2 rounded-full bg-emerald-500"></span> 가득</span>
-                <span className="flex items-center gap-1 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-500"></span> 가동</span>
+                <span className="flex items-center gap-1 text-blue-600"><span className="w-2 h-2 rounded-full bg-blue-500"></span> 가동 (기타 프로젝트 투입)</span>
                 <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-slate-300"></span> 비가득</span>
             </div>
         </div>

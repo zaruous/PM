@@ -41,3 +41,8 @@ export const deleteAssignment = (id: string) => request(`/assignments/${id}`, { 
 
 // Position Levels
 export const getPositionLevels = () => request('/position-levels');
+
+// Auth
+export const login = (id: string, password: string) => request('/auth/login', { method: 'POST', body: JSON.stringify({ id, password }) });
+export const forgotPassword = (id: string) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ id }) });
+export const resetPassword = (token: string, password: string) => request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) });

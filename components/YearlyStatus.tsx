@@ -134,7 +134,7 @@ export const YearlyStatus: React.FC = () => {
 
     // 1. Title
     ws_data.push([`연도별 인력 가동 현황 (${currentYear})`]);
-    ws_data.push([`인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)`]);
+    ws_data.push([`인원별 월간 가동 상태 (과부하/가득/부분가득/기타 프로젝트 투입/비가득)`]);
     ws_data.push([]); // Spacer
 
     // 2. Legend
@@ -142,7 +142,7 @@ export const YearlyStatus: React.FC = () => {
         { status: '과부하 (MM > 1.0)', color: statusColors.Overloaded },
         { status: '가득 (MM = 1.0)', color: statusColors.FullBillable },
         { status: '부분가득 (MM < 1.0)', color: statusColors.PartialBillable },
-        { status: '가동 (Active/Other)', color: statusColors.Active },
+        { status: '가동 (기타 프로젝트 투입)', color: statusColors.Active },
         { status: '비가득 (Unassigned)', color: statusColors.Unassigned }
     ];
     ws_data.push(['범례']);
@@ -218,7 +218,7 @@ export const YearlyStatus: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">연도별 인력 가동 현황</h2>
-          <p className="text-slate-500 text-sm">인원별 월간 가동 상태 (과부하/가득/부분가득/가동/비가득)</p>
+          <p className="text-slate-500 text-sm">인원별 월간 가동 상태 (과부하/가득/부분가득/기타 프로젝트 투입/비가득)</p>
         </div>
         <div className='flex items-center gap-2'>
             <YearSelector year={currentYear} onYearChange={(newYear) => setCurrentYear(newYear)} />
@@ -240,7 +240,7 @@ export const YearlyStatus: React.FC = () => {
             <div className="w-3 h-3 rounded bg-emerald-300"></div> 부분가득 (MM &lt; 1.0)
         </div>
         <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
-            <div className="w-3 h-3 rounded bg-blue-400"></div> 가동 (Active/Other)
+            <div className="w-3 h-3 rounded bg-blue-400"></div> 가동 (기타 프로젝트 투입)
         </div>
         <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-600">
             <div className="w-3 h-3 rounded bg-slate-200"></div> 비가득 (Unassigned)

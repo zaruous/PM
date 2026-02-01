@@ -1,4 +1,3 @@
-
 export enum Role {
   PM = 'PM',
   PL = 'PL',
@@ -32,6 +31,9 @@ export interface Member {
   employee_number?: string;
   join_date?: string;
   note?: string;
+  password?: string;
+  password_reset_token?: string;
+  password_reset_expires?: Date;
 }
 
 export interface Assignment {

@@ -1,27 +1,23 @@
-
 import React, { useState } from 'react';
-import { PMOProvider, usePMO } from './context/PMOContext';
+import { AuthProvider, useAuth } from '../context/AuthContext.tsx';
 import { ProjectManagement } from './components/ProjectManagement';
 import { ResourceAllocation } from './components/ResourceAllocation';
 import { MMAnalysis } from './components/MMAnalysis';
 import { YearlyStatus } from './components/YearlyStatus';
 import { UserManagement } from './components/UserManagement';
-import { LayoutDashboard, Users, PieChart, Layers, CalendarRange, UserCog, Loader, AlertTriangle } from 'lucide-react';
-import { AuthProvider, useAuth } from './context/AuthContext.tsx';
+import { LayoutDashboard, Users, PieChart, Layers, CalendarRange, UserCog, Loader, AlertTriangle, LogOut } from 'lucide-react';
 
 const App: React.FC = () => {
   return (
-      <AuthProvider>
-        <PMOProvider>
-          <MainLayout />
-        </PMOProvider>
-      </AuthProvider>
+    <AuthProvider>
+      <MainLayout />
+    </AuthProvider>
   );
 };
 
 const MainLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'projects' | 'users' | 'allocation' | 'analysis' | 'yearly'>('projects');
-  const { loading, error } = usePMO();
+  const { loading, error, user, logout } = useAuth();
 
   const renderContent = () => {
     if (loading) {
@@ -101,12 +97,19 @@ const MainLayout: React.FC = () => {
           </button>
         </nav>
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs text-white font-bold">PM</div>
-            <div className="text-sm">
-              <div className="text-white">Admin User</div>
-              <div className="text-xs text-slate-500">PMO Manager</div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs text-white font-bold">
+                    {user?.name[0] || 'U'}
+                </div>
+                <div className="text-sm">
+                <div className="text-white">{user?.name || 'User'}</div>
+                <div className="text-xs text-slate-500">{user?.position || 'Guest'}</div>
+                </div>
             </div>
+            <button onClick={logout} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md">
+                <LogOut size={18} />
+            </button>
           </div>
         </div>
       </aside>
@@ -133,4 +136,3 @@ const MainLayout: React.FC = () => {
 }
 
 export default App;
-
